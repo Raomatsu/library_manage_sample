@@ -1,7 +1,15 @@
 spring:
   application:
-    name: com.library-management-sample
+    name: com.library_management_sample
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/lib_manage_db
-    username: test
-    password: test
+    url: jdbc:postgresql://cd1goc44htrmfn.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASS}
+    driver-class-name: org.postgresql.Driver
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  tomcat:
+    uri-encoding: UTF-8

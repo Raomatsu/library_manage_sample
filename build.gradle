@@ -1,11 +1,21 @@
+import nu.studer.gradle.jooq.JooqEdition
+buildscript {
+	configurations['classpath'].resolutionStrategy.eachDependency {
+		if (requested.group.startsWith('org.jooq') && requested.name.startsWith('jooq')) {
+			useVersion '3.17.3'
+		}
+	}
+}
+
 plugins {
 	id 'org.springframework.boot' version '3.3.1'
 	id 'io.spring.dependency-management' version '1.1.5'
 	id 'org.jetbrains.kotlin.jvm' version '1.9.24'
 	id 'org.jetbrains.kotlin.plugin.spring' version '1.9.24'
+	id 'nu.studer.jooq' version '9.0'
 }
 
-group = 'com.library-management-sample'
+group = 'com.library_management_sample'
 version = '0.0.1-SNAPSHOT'
 
 java {
@@ -18,14 +28,19 @@ repositories {
 	mavenCentral()
 }
 
+jooq.version = dependencyManagement.importedProperties['jooq.version']
+
 dependencies {
-//	implementation 'org.springframework.boot:spring-boot-starter-jooq'
+	implementation 'org.springframework.boot:spring-boot-starter-jooq:3.3.1'
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
-//	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+	jooqGenerator 'org.postgresql:postgresql:42.7.3'
 }
 
 kotlin {
@@ -36,4 +51,65 @@ kotlin {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+tasks.named("compileKotlin") {
+	dependsOn(tasks.named("generateJooq"))
+}
+
+jooq {
+	edition = JooqEdition.OSS
+	version = '3.19.1'
+	configurations {
+		main {
+			generationTool {
+				jdbc {
+					driver = 'org.postgresql.Driver'
+					url = 'jdbc:postgresql://cd1goc44htrmfn.cluster-czrs8kj4isg7.us-east-1.rds.amazonaws.com:5432/d7m3sjml7gjk81'
+					user = DB_USER
+					password = DB_PASS
+				}
+				generator {
+					name = 'org.jooq.codegen.KotlinGenerator'
+					database {
+						name = 'org.jooq.meta.postgres.PostgresDatabase'
+						inputSchema = 'public'
+						forcedTypes {
+							forcedType {
+								name = 'varchar'
+								includeExpression = '.*'
+								includeTypes = 'JSONB?'
+							}
+							forcedType {
+								name = 'varchar'
+								includeExpression = '.*'
+								includeTypes = 'INET'
+							}
+						}
+					}
+
+					generate {
+						deprecated = false
+						records = true
+						immutablePojos = true
+						fluentSetters = true
+					}
+					target {
+						packageName = 'com.library_management_sample'
+						directory = 'build/generated-src/jooq/main'
+					}
+					strategy.name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+				}
+			}
+		}
+
+	}
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs = ['src/main/kotlin', 'build/generated-src/jooq/main']
+		}
+	}
 }

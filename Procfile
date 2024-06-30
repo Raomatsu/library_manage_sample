@@ -1,1 +1,1 @@
-web: java -jar build/libs/com.library-management-sample-0.0.1-SNAPSHOT.jar --server.port=$PORT
+web: java -jar build/libs/com.library_management_sample-0.0.1-SNAPSHOT.jar --server.port=$PORT
